@@ -10,7 +10,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const pool = new Pool({ host: 'localhost', database: 'timerapp', port: 5432 });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/timerapp',
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
 const JWT_SECRET = 'timetrack-secret-2024-change-in-production';
 const SALT_ROUNDS = 10;
 
