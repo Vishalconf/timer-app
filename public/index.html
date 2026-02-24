@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimeTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --border: #2a2a30;
+      --accent: #e8ff5a;
+      --accent2: #5affb8;
+      --text: #f0f0f0;
+      --muted: #6b6b7a;
+      --danger: #ff5a5a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+    /* LOGIN */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .login-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 48px; width: 360px;
+    }
+    .login-box h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .login-box h1 span { color: var(--accent); }
+    .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .field label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .error-msg { color: var(--danger); font-size: 13px; margin-bottom: 12px; font-family: 'DM Mono', monospace; display: none; }
+
+    /* APP */
+    #app-screen { display: none; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 40px; border-bottom: 1px solid var(--border);
+    }
+    .logo { font-size: 20px; font-weight: 800; }
+    .logo span { color: var(--accent); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .user-pill {
+      font-family: 'DM Mono', monospace; font-size: 13px;
+      background: rgba(232,255,90,0.08); border: 1px solid rgba(232,255,90,0.2);
+      color: var(--accent); padding: 6px 14px; border-radius: 20px;
+    }
+    nav { display: flex; gap: 4px; }
+    nav button {
+      background: none; border: 1px solid transparent; color: var(--muted);
+      padding: 7px 16px; border-radius: 6px; cursor: pointer;
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; transition: all 0.15s;
+    }
+    nav button:hover { color: var(--text); border-color: var(--border); }
+    nav button.active { color: var(--accent); border-color: var(--accent); background: rgba(232,255,90,0.07); }
+
+    .container { padding: 40px; max-width: 1000px; margin: 0 auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h2 { font-size: 26px; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.5px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+
+    input, select, textarea {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 10px 14px; border-radius: 8px; font-family: 'DM Mono', monospace;
+      font-size: 14px; width: 100%; transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    textarea { min-height: 70px; resize: vertical; }
+    select[multiple] { height: 110px; }
+
+    .form-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .form-row input, .form-row select { flex: 1; min-width: 140px; }
+
+    .btn {
+      background: var(--accent); color: #0d0d0f; border: none;
+      padding: 10px 22px; border-radius: 8px; font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 14px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn.full { width: 100%; padding: 12px; font-size: 15px; }
+    .btn.danger { background: var(--danger); color: #fff; }
+    .btn.secondary { background: var(--border); color: var(--text); }
+    .btn.green { background: var(--accent2); color: #0d0d0f; }
+    .btn.stop { background: var(--danger); color: #fff; }
+    .btn.small { padding: 6px 14px; font-size: 12px; }
+    .btn.outline { background: none; border: 1px solid var(--border); color: var(--text); }
+    .btn.outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .list-item:last-child { border-bottom: none; }
+    .list-item-name { font-weight: 600; font-size: 15px; }
+    .list-item-meta { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .list-actions { display: flex; gap: 8px; }
+
+    /* TIMER */
+    .timer-display {
+      text-align: center; padding: 48px 24px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; margin-bottom: 20px;
+    }
+    .timer-clock {
+      font-family: 'DM Mono', monospace; font-size: 72px; font-weight: 500;
+      color: var(--accent); letter-spacing: -2px; line-height: 1; margin-bottom: 12px;
+    }
+    .timer-clock.inactive { color: var(--muted); }
+    .timer-info { font-size: 14px; color: var(--muted); font-weight: 600; }
+    .timer-info.running { color: var(--accent2); }
+    .timer-buttons { display: flex; gap: 12px; justify-content: center; }
+    .timer-buttons .btn { padding: 14px 36px; font-size: 16px; }
+
+    /* REPORTS */
+    .report-filters { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; }
+    .filter-group label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group input { width: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 14px; }
+    th { text-align: left; padding: 12px 16px; background: var(--bg); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--border); }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    .project-total { background: rgba(232,255,90,0.04); }
+
+    .badge {
+      display: inline-block; background: rgba(90,255,184,0.1); color: var(--accent2);
+      border: 1px solid rgba(90,255,184,0.3); padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-family: 'DM Mono', monospace; margin: 2px;
+    }
+    .badge.admin { background: rgba(232,255,90,0.1); color: var(--accent); border-color: rgba(232,255,90,0.3); }
+
+    .section-label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+    .empty { color: var(--muted); text-align: center; padding: 32px; font-family: 'DM Mono', monospace; font-size: 14px; }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 400px; }
+    .modal h3 { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+    .modal .field { margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Time<span>Track</span></h1>
+    <p>Sign in to track your time</p>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="your username" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn full" onclick="login()">Sign In</button>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <header>
+    <div class="logo">Time<span>Track</span></div>
+    <nav id="main-nav">
+      <button class="active" onclick="showPage('timer', this)">Timer</button>
+      <button onclick="showPage('projects', this)">Projects</button>
+      <button id="nav-users" style="display:none" onclick="showPage('users', this)">Users</button>
+      <button onclick="showPage('reports', this)">Reports</button>
+      <button onclick="showPage('settings', this)">Settings</button>
+    </nav>
+    <div class="header-right">
+      <div class="user-pill" id="user-pill"></div>
+      <button class="btn outline small" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- TIMER -->
+    <div class="page active" id="page-timer">
+      <h2>Timer</h2>
+      <div class="card" style="margin-bottom:20px">
+        <div class="section-label">Select Project</div>
+        <select id="timer-project" style="width:100%">
+          <option value="">Choose a project...</option>
+        </select>
+      </div>
+      <div class="timer-display">
+        <div class="timer-clock inactive" id="timer-clock">00:00:00</div>
+        <div class="timer-info" id="timer-status">Select a project to begin</div>
+      </div>
+      <div class="timer-buttons">
+        <button class="btn green" id="btn-start" onclick="startTimer()">▶ Start</button>
+        <button class="btn stop" id="btn-stop" onclick="stopTimer()" style="display:none">■ Stop</button>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="page" id="page-projects">
+      <h2>Projects</h2>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:14px">New Project</div>
+        <div class="form-row">
+          <input type="text" id="project-name" placeholder="Project name">
+          <input type="text" id="project-desc" placeholder="Description (optional)">
+        </div>
+        <div class="section-label">Assign Members</div>
+        <select id="project-members" multiple style="width:100%;margin-bottom:16px"></select>
+        <button class="btn" onclick="createProject()">+ Add Project</button>
+      </div>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:14px">All Projects</div>
+        <div id="projects-list"><div class="empty">No projects yet</div></div>
+      </div>
+    </div>
+
+    <!-- USERS (admin only) -->
+    <div class="page" id="page-users">
+      <h2>Users</h2>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:14px">Add New User</div>
+        <div class="form-row">
+          <input type="text" id="new-user-name" placeholder="Full name">
+          <input type="text" id="new-user-username" placeholder="Username">
+          <input type="password" id="new-user-password" placeholder="Password">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <input type="checkbox" id="new-user-admin" style="width:auto">
+          <label for="new-user-admin" style="font-size:14px">Admin privileges</label>
+        </div>
+        <button class="btn" onclick="createUser()">+ Add User</button>
+      </div>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:14px">All Users</div>
+        <div id="users-list"><div class="empty">No users yet</div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <h2>Reports</h2>
+      <div class="card">
+        <div class="report-filters">
+          <div class="filter-group">
+            <label>From</label>
+            <input type="date" id="report-start">
+          </div>
+          <div class="filter-group">
+            <label>To</label>
+            <input type="date" id="report-end">
+          </div>
+          <button class="btn" onclick="loadReport()">Run Report</button>
+        </div>
+        <div id="report-results"><div class="empty">Select a date range and run report</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <h2>Settings</h2>
+      <div class="card">
+        <div class="section-label" style="margin-bottom:16px">Change Password</div>
+        <div class="field" style="margin-bottom:12px">
+          <label style="font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Current Password</label>
+          <input type="password" id="curr-pass" placeholder="Current password">
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label style="font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">New Password</label>
+          <input type="password" id="new-pass" placeholder="New password">
+        </div>
+        <div class="field" style="margin-bottom:20px">
+          <label style="font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Confirm New Password</label>
+          <input type="password" id="confirm-pass" placeholder="Confirm new password">
+        </div>
+        <div class="error-msg" id="pw-error" style="display:none;margin-bottom:12px"></div>
+        <div id="pw-success" style="display:none;color:var(--accent2);font-size:13px;font-family:'DM Mono',monospace;margin-bottom:12px"></div>
+        <button class="btn" onclick="changePassword()">Update Password</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal">
+    <h3>Reset Password</h3>
+    <div class="field">
+      <label style="font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">New Password for <span id="reset-username"></span></label>
+      <input type="password" id="reset-new-password" placeholder="New password">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="confirmResetPassword()">Reset Password</button>
+      <button class="btn secondary" onclick="closeResetModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000/api';
+let currentUser = null;
+let token = null;
+let timerInterval = null;
+let timerStart = null;
+let resetUserId = null;
+
+function getHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+}
+
+// AUTH
+async function login() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+
+    token = data.token;
+    currentUser = data.user;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    document.getElementById('user-pill').textContent = currentUser.name + (currentUser.is_admin ? ' (admin)' : '');
+
+    if (currentUser.is_admin) {
+      document.getElementById('nav-users').style.display = 'inline-block';
+    }
+
+    loadTimerProjects();
+    setDefaultDates();
+  } catch (e) {
+    errEl.textContent = 'Could not connect to server'; errEl.style.display = 'block';
+  }
+}
+
+function logout() {
+  token = null; currentUser = null;
+  clearInterval(timerInterval); timerInterval = null;
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// NAVIGATION
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  if (name === 'timer') loadTimerProjects();
+  if (name === 'projects') { loadProjects(); loadUsersForSelect(); }
+  if (name === 'users') loadUsers();
+  if (name === 'reports') setDefaultDates();
+}
+
+// TIMER
+async function loadTimerProjects() {
+  const res = await fetch(`${API}/projects/mine`, { headers: getHeaders() });
+  const projects = await res.json();
+  const sel = document.getElementById('timer-project');
+  sel.innerHTML = '<option value="">Choose a project...</option>' + projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+  // Check for active timer
+  const activeRes = await fetch(`${API}/timer/active`, { headers: getHeaders() });
+  const active = await activeRes.json();
+  if (active) {
+    sel.value = active.project_id;
+    timerStart = new Date(active.started_at);
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-block';
+    document.getElementById('timer-clock').className = 'timer-clock';
+    document.getElementById('timer-status').textContent = `Tracking: ${active.project_name}`;
+    document.getElementById('timer-status').className = 'timer-info running';
+    clearInterval(timerInterval);
+    timerInterval = setInterval(tickClock, 1000);
+    tickClock();
+  }
+}
+
+function fmt(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+}
+
+function fmtHours(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function tickClock() {
+  const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+  document.getElementById('timer-clock').textContent = fmt(elapsed);
+}
+
+function resetClock() {
+  clearInterval(timerInterval); timerInterval = null;
+  document.getElementById('timer-clock').textContent = '00:00:00';
+  document.getElementById('timer-clock').className = 'timer-clock inactive';
+  document.getElementById('timer-status').textContent = 'Select a project to begin';
+  document.getElementById('timer-status').className = 'timer-info';
+  document.getElementById('btn-start').style.display = 'inline-block';
+  document.getElementById('btn-stop').style.display = 'none';
+}
+
+async function startTimer() {
+  const project_id = document.getElementById('timer-project').value;
+  if (!project_id) { alert('Please select a project'); return; }
+  const res = await fetch(`${API}/timer/start`, {
+    method: 'POST', headers: getHeaders(), body: JSON.stringify({ project_id })
+  });
+  const entry = await res.json();
+  timerStart = new Date(entry.started_at);
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').style.display = 'inline-block';
+  document.getElementById('timer-clock').className = 'timer-clock';
+  const name = document.getElementById('timer-project').selectedOptions[0].text;
+  document.getElementById('timer-status').textContent = `Tracking: ${name}`;
+  document.getElementById('timer-status').className = 'timer-info running';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tickClock, 1000);
+}
+
+async function stopTimer() {
+  await fetch(`${API}/timer/stop`, { method: 'POST', headers: getHeaders() });
+  resetClock();
+}
+
+// USERS
+async function loadUsers() {
+  const res = await fetch(`${API}/users`, { headers: getHeaders() });
+  const users = await res.json();
+  const el = document.getElementById('users-list');
+  if (!users.length) { el.innerHTML = '<div class="empty">No users yet</div>'; return; }
+  el.innerHTML = users.map(u => `
+    <div class="list-item">
+      <div>
+        <div class="list-item-name">${u.name} ${u.is_admin ? '<span class="badge admin">admin</span>' : ''}</div>
+        <div class="list-item-meta">@${u.username}</div>
+      </div>
+      <div class="list-actions">
+        <button class="btn secondary small" onclick="openResetModal(${u.id}, '${u.username}')">Reset Password</button>
+        ${u.id !== currentUser.id ? `<button class="btn danger small" onclick="deleteUser(${u.id})">Remove</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function createUser() {
+  const name = document.getElementById('new-user-name').value.trim();
+  const username = document.getElementById('new-user-username').value.trim();
+  const password = document.getElementById('new-user-password').value;
+  const is_admin = document.getElementById('new-user-admin').checked;
+  if (!name || !username || !password) { alert('Please fill in all fields'); return; }
+  const res = await fetch(`${API}/users`, {
+    method: 'POST', headers: getHeaders(), body: JSON.stringify({ name, username, password, is_admin })
+  });
+  if (!res.ok) { const d = await res.json(); alert(d.error); return; }
+  document.getElementById('new-user-name').value = '';
+  document.getElementById('new-user-username').value = '';
+  document.getElementById('new-user-password').value = '';
+  document.getElementById('new-user-admin').checked = false;
+  loadUsers();
+}
+
+async function deleteUser(id) {
+  if (!confirm('Remove this user?')) return;
+  await fetch(`${API}/users/${id}`, { method: 'DELETE', headers: getHeaders() });
+  loadUsers();
+}
+
+function openResetModal(id, username) {
+  resetUserId = id;
+  document.getElementById('reset-username').textContent = username;
+  document.getElementById('reset-new-password').value = '';
+  document.getElementById('reset-modal').classList.add('open');
+}
+
+function closeResetModal() {
+  document.getElementById('reset-modal').classList.remove('open');
+  resetUserId = null;
+}
+
+async function confirmResetPassword() {
+  const new_password = document.getElementById('reset-new-password').value;
+  if (!new_password) { alert('Please enter a new password'); return; }
+  await fetch(`${API}/users/${resetUserId}/reset-password`, {
+    method: 'PUT', headers: getHeaders(), body: JSON.stringify({ new_password })
+  });
+  closeResetModal();
+  alert('Password reset successfully!');
+}
+
+// PROJECTS
+async function loadUsersForSelect() {
+  const res = await fetch(`${API}/users`, { headers: getHeaders() });
+  const users = await res.json();
+  document.getElementById('project-members').innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+}
+
+async function loadProjects() {
+  const res = await fetch(`${API}/projects`, { headers: getHeaders() });
+  const projects = await res.json();
+  const el = document.getElementById('projects-list');
+  if (!projects.length) { el.innerHTML = '<div class="empty">No projects yet</div>'; return; }
+
+  const usersRes = await fetch(`${API}/users`, { headers: getHeaders() });
+  const users = await usersRes.json();
+  const userMap = {};
+  users.forEach(u => userMap[u.id] = u.name);
+
+  el.innerHTML = projects.map(p => `
+    <div class="list-item">
+      <div>
+        <div class="list-item-name">${p.name}</div>
+        <div class="list-item-meta">${p.description || 'No description'}</div>
+        <div style="margin-top:6px">${(p.member_ids || []).map(id => `<span class="badge">${userMap[id] || id}</span>`).join('')}</div>
+      </div>
+      ${currentUser.is_admin ? `<button class="btn danger small" onclick="deleteProject(${p.id})">Remove</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function createProject() {
+  const name = document.getElementById('project-name').value.trim();
+  if (!name) return;
+  const description = document.getElementById('project-desc').value.trim();
+  const sel = document.getElementById('project-members');
+  const member_ids = Array.from(sel.selectedOptions).map(o => parseInt(o.value));
+  await fetch(`${API}/projects`, {
+    method: 'POST', headers: getHeaders(), body: JSON.stringify({ name, description, member_ids })
+  });
+  document.getElementById('project-name').value = '';
+  document.getElementById('project-desc').value = '';
+  loadProjects();
+}
+
+async function deleteProject(id) {
+  if (!confirm('Remove this project?')) return;
+  await fetch(`${API}/projects/${id}`, { method: 'DELETE', headers: getHeaders() });
+  loadProjects();
+}
+
+// REPORTS
+function setDefaultDates() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  document.getElementById('report-start').value = start.toISOString().split('T')[0];
+  document.getElementById('report-end').value = now.toISOString().split('T')[0];
+}
+
+async function loadReport() {
+  const start = document.getElementById('report-start').value;
+  const end = document.getElementById('report-end').value;
+  if (!start || !end) { alert('Please select a date range'); return; }
+  const res = await fetch(`${API}/reports?start_date=${start}&end_date=${end}`, { headers: getHeaders() });
+  const rows = await res.json();
+  const el = document.getElementById('report-results');
+  if (!rows.length) { el.innerHTML = '<div class="empty">No time entries in this period</div>'; return; }
+
+  const byProject = {};
+  rows.forEach(r => {
+    if (!byProject[r.project_name]) byProject[r.project_name] = { total: 0, users: [] };
+    byProject[r.project_name].users.push(r);
+    byProject[r.project_name].total += parseInt(r.total_seconds);
+  });
+
+  let html = `<table><thead><tr><th>Project / Member</th><th>Sessions</th><th>Time</th></tr></thead><tbody>`;
+  for (const [project, data] of Object.entries(byProject)) {
+    html += `<tr class="project-total"><td><strong>${project}</strong></td><td></td><td><strong>${fmtHours(data.total)}</strong></td></tr>`;
+    data.users.forEach(u => {
+      html += `<tr><td style="padding-left:32px;color:var(--muted)">${u.user_name}</td><td>${u.session_count}</td><td>${fmtHours(parseInt(u.total_seconds))}</td></tr>`;
+    });
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// CHANGE PASSWORD
+async function changePassword() {
+  const current_password = document.getElementById('curr-pass').value;
+  const new_password = document.getElementById('new-pass').value;
+  const confirm = document.getElementById('confirm-pass').value;
+  const errEl = document.getElementById('pw-error');
+  const successEl = document.getElementById('pw-success');
+  errEl.style.display = 'none'; successEl.style.display = 'none';
+
+  if (new_password !== confirm) { errEl.textContent = 'Passwords do not match'; errEl.style.display = 'block'; return; }
+  if (new_password.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; errEl.style.display = 'block'; return; }
+
+  const res = await fetch(`${API}/auth/change-password`, {
+    method: 'POST', headers: getHeaders(), body: JSON.stringify({ current_password, new_password })
+  });
+  if (!res.ok) { const d = await res.json(); errEl.textContent = d.error; errEl.style.display = 'block'; return; }
+  successEl.textContent = 'Password updated successfully!'; successEl.style.display = 'block';
+  document.getElementById('curr-pass').value = '';
+  document.getElementById('new-pass').value = '';
+  document.getElementById('confirm-pass').value = '';
+}
+</script>
+</body>
+</html>
