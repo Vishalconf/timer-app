@@ -234,5 +234,6 @@ app.get('/api/reports', authMiddleware, async (req, res) => {
 });
 
 initDB().then(() => {
-  app.listen(3000, () => console.log('Timer app running at http://localhost:3000'));
+  const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Timer app running on port ${PORT}`));
 }).catch(console.error);
